@@ -28,6 +28,21 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* Base theme colors */
+        :root {
+            --primary-color: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --background-light: #ffffff;
+            --background-dark: #111827;
+            --text-light: #c2c2c2;
+            --text-dark: #f3f4f6;
+            --gray-light: #f3f4f6;
+            --gray-dark: #1f2937;
+            --border-light: #e5e7eb;
+            --border-dark: #374151;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -37,8 +52,8 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: #f5f7fb;
-            color: #333;
+            background: var(--background-light);
+            color: var(--text-light);
             line-height: 1.6;
             min-height: 100vh;
             min-height: -webkit-fill-available;
@@ -50,50 +65,56 @@
         }
 
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 1rem;
-            padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
+            max-width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            margin: 0;
+            padding: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
 
         .header {
-            text-align: center;
-            padding: 0.8rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 1rem;
-            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            margin: 0;
+            padding: 1rem;
+            border-radius: 0;
+            border-bottom: 1px solid var(--border-light);
         }
 
         .header h1 {
-            color: #2d3748;
+            color: var(--text-light);
             font-size: clamp(1.2rem, 4vw, 1.8rem);
             font-weight: 600;
         }
 
         #chat-container {
-            flex-grow: 1;
-            background: white;
-            border-radius: 12px;
+            flex: 1;
+            margin: 0;
+            border-radius: 0;
             padding: 1rem;
-            margin-bottom: 1rem;
+            padding-bottom: 80px;
+            background: var(--background-light);
             overflow-y: auto;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             -webkit-overflow-scrolling: touch;
         }
 
         .message {
-            margin-bottom: 1rem;
-            padding: 0.8rem;
-            border-radius: 10px;
-            max-width: 85%;
-            word-wrap: break-word;
+            position: relative;
+            max-width: 80%;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            border-radius: 18px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             animation: fadeIn 0.3s ease-in;
             font-size: clamp(0.9rem, 3vw, 1rem);
         }
@@ -104,61 +125,68 @@
         }
 
         .user-message {
-            background: #3b82f6;
+            background: var(--primary-color);
             color: white;
             margin-left: auto;
             border-bottom-right-radius: 4px;
         }
 
         .ai-message {
-            background: #f3f4f6;
-            color: #1f2937;
+            background: var(--gray-light);
+            color: var(--text-light);
             margin-right: auto;
             border-bottom-left-radius: 4px;
         }
 
         #input-container {
-            position: sticky;
+            position: fixed;
             bottom: 0;
-            background: white;
-            padding: 0.8rem;
-            padding-bottom: calc(0.8rem + env(safe-area-inset-bottom));
-            margin-bottom: env(safe-area-inset-bottom);
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            z-index: 1000;
+            left: 0;
+            right: 0;
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border-light);
+            border-radius: 0;
         }
 
         #user-input {
-            flex-grow: 1;
-            padding: 0.8rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.2s;
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border-light);
+            background: var(--gray-light);
+            font-size: 16px;
+            transition: all 0.2s ease;
             outline: none;
             -webkit-appearance: none;
+            color: var(--text-light);
         }
 
         #user-input:focus {
-            border-color: #3b82f6;
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
         }
 
         button {
-            padding: 0.8rem 1.2rem;
-            background: #3b82f6;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            background: var(--primary-color);
             color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 500;
+            transition: all 0.2s ease;
             cursor: pointer;
-            transition: background-color 0.2s;
-            white-space: nowrap;
             -webkit-appearance: none;
+            border: none;
         }
 
         button:hover {
-            background: #2563eb;
+            background: var(--primary-dark);
         }
 
         button:active {
@@ -166,123 +194,78 @@
         }
 
         .loading {
+            padding: 8px;
+            margin: 8px 0;
             display: none;
-            margin: 0.5rem auto;
-            text-align: center;
         }
 
         .loading span {
             display: inline-block;
-            width: 6px;
-            height: 6px;
-            background-color: #3b82f6;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
             border-radius: 50%;
             margin: 0 2px;
             animation: bounce 0.6s infinite alternate;
         }
 
-        .loading span:nth-child(2) { animation-delay: 0.2s; }
-        .loading span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes bounce {
-            to { transform: translateY(-6px); }
+        .loading span:nth-child(2) {
+            animation-delay: 0.2s;
         }
 
-        /* Mobile-specific styles */
-        @media (max-width: 640px) {
-            .container {
-                padding: 0.5rem;
+        .loading span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            to {
+                transform: translateY(-4px);
+                opacity: 0.5;
+            }
+        }
+
+        /* Dark Mode Enhancements */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: var(--background-dark);
+                color: var(--text-dark);
             }
 
             .header {
-                padding: 0.6rem;
-                margin-bottom: 0.5rem;
+                background: rgba(17, 24, 39, 0.95);
+                border-bottom: 1px solid var(--border-dark);
             }
 
             #chat-container {
-                padding: 0.8rem;
-                margin-bottom: 0.5rem;
+                background: var(--background-dark);
             }
 
-            .message {
-                padding: 0.7rem;
-                max-width: 90%;
-                margin-bottom: 0.8rem;
-            }
-
-            #input-container {
-                padding: 0.6rem;
-            }
-
-            #user-input {
-                padding: 0.6rem;
-                font-size: 16px; /* Prevents iOS zoom on focus */
-            }
-
-            button {
-                padding: 0.6rem 1rem;
-                font-size: 0.9rem;
-            }
-        }
-
-        /* iPhone SE and smaller devices */
-        @media (max-width: 375px) {
-            .header h1 {
-                font-size: 1.2rem;
-            }
-
-            .message {
-                max-width: 95%;
-                font-size: 0.9rem;
-            }
-
-            #input-container {
-                gap: 0.3rem;
-            }
-
-            button {
-                padding: 0.6rem 0.8rem;
-            }
-        }
-
-        /* Prevent rubber-band scrolling on iOS */
-        @supports (-webkit-touch-callout: none) {
-            body {
-                overflow: hidden;
-            }
-            #chat-container {
-                -webkit-overflow-scrolling: touch;
-            }
-        }
-
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background: #1a1a1a;
-                color: #fff;
-            }
-
-            .header, #chat-container, #input-container {
-                background: #2d2d2d;
-            }
-
-            .header h1 {
-                color: #fff;
+            .user-message {
+                background: var(--primary-color);
             }
 
             .ai-message {
-                background: #3d3d3d;
-                color: #fff;
+                background: var(--gray-dark);
+                color: var(--text-dark);
+            }
+
+            #input-container {
+                background: rgba(17, 24, 39, 0.95);
+                border-top: 1px solid var(--border-dark);
             }
 
             #user-input {
-                background: #3d3d3d;
-                border-color: #4d4d4d;
-                color: #fff;
+                background: var(--gray-dark);
+                border-color: var(--border-dark);
+                color: var(--text-dark);
             }
 
             #user-input::placeholder {
-                color: #aaa;
+                color: rgba(243, 244, 246, 0.5);
+            }
+
+            .loading span {
+                background: var(--primary-light);
             }
         }
 
@@ -332,12 +315,81 @@
             50% { transform: scale(0.98); }
             100% { transform: scale(1); }
         }
+
+        /* Fix iOS height issues */
+        html {
+            height: -webkit-fill-available;
+        }
+
+        body {
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            overscroll-behavior-y: none; /* Prevent pull-to-refresh on body */
+        }
+
+        /* Fix iOS safe areas */
+        .container {
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        /* Fix input container on iOS */
+        #input-container {
+            padding-bottom: max(0.8rem, env(safe-area-inset-bottom));
+            margin-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Fix scrolling issues */
+        #chat-container {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            overscroll-behavior: contain;
+            padding-bottom: calc(80px + env(safe-area-inset-bottom));
+        }
+
+        /* Fix button touch issues */
+        button {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        /* Fix input appearance */
+        #user-input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        /* Fix iOS momentum scrolling */
+        * { 
+            touch-action: manipulation;
+        }
+
+        /* Message timestamp styling */
+        .message .timestamp {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .user-message .timestamp {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .ai-message .timestamp {
+            color: var(--text-light);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .ai-message .timestamp {
+                color: var(--text-dark);
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>AI Chat Assistant</h1>
+            <h1>Teknopark Yapay Zeka Asistanı</h1>
         </div>
         <div id="chat-container"></div>
         <div class="loading" id="loading-indicator">
@@ -347,7 +399,7 @@
         </div>
         <div id="input-container">
             <input type="text" id="user-input" placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendMessage()">Send</button>
+            <button onclick="sendMessage()">Gönder</button>
         </div>
     </div>
 
@@ -358,52 +410,70 @@
             }
         }
 
-        function appendMessage(message, isUser) {
-            const chatContainer = document.getElementById('chat-container');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
-            messageDiv.textContent = message;
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
         async function sendMessage() {
             const input = document.getElementById('user-input');
             const loadingIndicator = document.getElementById('loading-indicator');
             const message = input.value.trim();
             
-            if (message) {
-                vibrate(); // Add haptic feedback
+            if (!message) return;
+            
+            try {
+                input.disabled = true; // Prevent double-sending
                 appendMessage(message, true);
                 input.value = '';
                 loadingIndicator.style.display = 'block';
 
-                try {
-                    const response = await fetch('/api/chat', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ message: message })
-                    });
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: message })
+                });
 
-                    const data = await response.json();
-                    
-                    if (data.error) {
-                        vibrate(); // Error feedback
-                        appendMessage(`Error: ${data.error}`, false);
-                        return;
-                    }
-                    
-                    vibrate(); // Success feedback
-                    const aiResponse = data.choices[0].message.content;
-                    appendMessage(aiResponse, false);
-                } catch (error) {
+                const data = await response.json();
+                
+                if (data.error) {
                     vibrate(); // Error feedback
-                    appendMessage(`Error: ${error.message}`, false);
-                } finally {
-                    loadingIndicator.style.display = 'none';
+                    appendMessage(`Error: ${data.error}`, false);
+                    return;
                 }
+                
+                vibrate(); // Success feedback
+                const aiResponse = data.choices[0].message.content;
+                appendMessage(aiResponse, false);
+            } catch (error) {
+                vibrate(); // Error feedback
+                appendMessage(`Error: ${error.message}`, false);
+            } finally {
+                loadingIndicator.style.display = 'none';
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        function appendMessage(message, isUser) {
+            try {
+                const chatContainer = document.getElementById('chat-container');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+                
+                const messageContent = document.createElement('div');
+                messageContent.textContent = message;
+                
+                const timestamp = document.createElement('div');
+                timestamp.style.fontSize = '0.7rem';
+                timestamp.style.opacity = '0.7';
+                timestamp.style.marginTop = '4px';
+                timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                messageDiv.appendChild(messageContent);
+                messageDiv.appendChild(timestamp);
+                chatContainer.appendChild(messageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            } catch (error) {
+                console.error('Failed to append message:', error);
+                alert('Failed to send message. Please try again.');
             }
         }
 
@@ -413,6 +483,61 @@
                 navigator.vibrate(10);
             }
         }
+
+        // Handle keyboard and scrolling
+        document.addEventListener('DOMContentLoaded', () => {
+            const userInput = document.getElementById('user-input');
+            const chatContainer = document.getElementById('chat-container');
+
+            userInput.addEventListener('focus', () => {
+                setTimeout(() => {
+                    window.scrollTo(0, 0);
+                    document.body.scrollTop = 0;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 300);
+            });
+
+            window.addEventListener('resize', () => {
+                if (document.activeElement.tagName === 'INPUT') {
+                    setTimeout(() => {
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                    }, 100);
+                }
+            });
+
+            // Prevent bounce scrolling on iOS
+            document.addEventListener('touchmove', function(e) {
+                if (e.target.id !== 'chat-container') {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            // Add pull-to-refresh functionality
+            let touchStart = 0;
+            let touchEnd = 0;
+
+            chatContainer.addEventListener('touchstart', e => {
+                touchStart = e.touches[0].clientY;
+            }, { passive: true });
+
+            chatContainer.addEventListener('touchend', e => {
+                touchEnd = e.changedTouches[0].clientY;
+                if (touchStart - touchEnd > 100) {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            }, { passive: true });
+
+            // Add offline support
+            window.addEventListener('online', () => {
+                userInput.placeholder = 'Aklınızda bulunan sorularınızı yazınız...';
+                userInput.disabled = false;
+            });
+
+            window.addEventListener('offline', () => {
+                userInput.placeholder = 'Şu anda çevrimdışı...';
+                userInput.disabled = true;
+            });
+        });
 
         // Service Worker registration
         if ('serviceWorker' in navigator) {
@@ -426,13 +551,6 @@
                     });
             });
         }
-
-        // Prevent bounce scrolling on iOS
-        document.addEventListener('touchmove', function(e) {
-            if (e.target.id !== 'chat-container') {
-                e.preventDefault();
-            }
-        }, { passive: false });
     </script>
 </body>
 </html> 

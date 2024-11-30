@@ -4,6 +4,7 @@ import json
 import os  # for environment variables
 from dotenv import load_dotenv
 from openai import OpenAI
+from typing import List, Dict
 
 # Try both methods of loading environment variables
 load_dotenv()
@@ -26,6 +27,39 @@ client = OpenAI(
 )
 
 app = Flask(__name__)
+
+class Message:
+    def __init__(self, role: str, content: List[Dict] | str):
+        self.role = role
+        self.content = content
+        self.tokens = self.estimate_tokens(str(content))
+
+    @staticmethod
+    def estimate_tokens(text: str) -> int:
+        return len(text) // 4
+
+class ConversationManager:
+    def __init__(self):
+        self.history: List[Message] = []
+        self.MAX_HISTORY_LENGTH = 10
+        self.MAX_TOKEN_COUNT = 2000
+
+    def add_message(self, role: str, content: List[Dict] | str):
+        self.history.append(Message(role, content))
+        self._truncate_history()
+
+    def _truncate_history(self):
+        if len(self.history) > self.MAX_HISTORY_LENGTH:
+            self.history = self.history[-self.MAX_HISTORY_LENGTH:]
+        
+        while sum(msg.tokens for msg in self.history) > self.MAX_TOKEN_COUNT and len(self.history) > 1:
+            self.history.pop(0)
+
+    def get_messages_for_api(self) -> List[Dict]:
+        return [{"role": msg.role, "content": msg.content} for msg in self.history]
+
+# Initialize conversation manager globally
+conversation_manager = ConversationManager()
 
 @app.route('/api/hello', methods=['GET'])
 def hello():
@@ -60,6 +94,9 @@ def chat():
                     "url": image_url
                 }
             })
+
+        # Add user message to conversation history
+        conversation_manager.add_message("user", message_content)
         
         completion = client.chat.completions.create(
             extra_headers={
@@ -67,21 +104,20 @@ def chat():
                 "X-Title": os.getenv('APP_NAME'),
             },
             model="anthropic/claude-3.5-sonnet",
-            messages=[
-                {
-                    "role": "user",
-                    "content": message_content
-                }
-            ],
-            max_tokens=75
+            messages=conversation_manager.get_messages_for_api(),
+            max_tokens=200
         )
         
-        print("API Response received:", completion.choices[0].message.content)
+        # Add assistant's response to conversation history
+        assistant_response = completion.choices[0].message.content
+        conversation_manager.add_message("assistant", assistant_response)
+        
+        print("API Response received:", assistant_response)
         
         return jsonify({
             "choices": [{
                 "message": {
-                    "content": completion.choices[0].message.content
+                    "content": assistant_response
                 }
             }]
         })
