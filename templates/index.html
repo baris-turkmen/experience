@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AI Chat Assistant</title>
+    
+    <!-- iOS specific meta tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AI Chat">
+    
+    <!-- iOS icons -->
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/static/icons/icon-167x167.png">
+    
+    <!-- Splash screens for iOS -->
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-2048-2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1668-2388.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1536-2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1125-2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1242-2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+    
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fb;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1rem;
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            font-weight: 600;
+        }
+
+        #chat-container {
+            flex-grow: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            overflow-y: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            border-radius: 10px;
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background: #3b82f6;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message {
+            background: #f3f4f6;
+            color: #1f2937;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        #input-container {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 0.8rem;
+            padding-bottom: calc(0.8rem + env(safe-area-inset-bottom));
+            margin-bottom: env(safe-area-inset-bottom);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 0.8rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        #user-input:focus {
+            border-color: #3b82f6;
+        }
+
+        button {
+            padding: 0.8rem 1.2rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+            -webkit-appearance: none;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .loading {
+            display: none;
+            margin: 0.5rem auto;
+            text-align: center;
+        }
+
+        .loading span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: bounce 0.6s infinite alternate;
+        }
+
+        .loading span:nth-child(2) { animation-delay: 0.2s; }
+        .loading span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            to { transform: translateY(-6px); }
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 640px) {
+            .container {
+                padding: 0.5rem;
+            }
+
+            .header {
+                padding: 0.6rem;
+                margin-bottom: 0.5rem;
+            }
+
+            #chat-container {
+                padding: 0.8rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .message {
+                padding: 0.7rem;
+                max-width: 90%;
+                margin-bottom: 0.8rem;
+            }
+
+            #input-container {
+                padding: 0.6rem;
+            }
+
+            #user-input {
+                padding: 0.6rem;
+                font-size: 16px; /* Prevents iOS zoom on focus */
+            }
+
+            button {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* iPhone SE and smaller devices */
+        @media (max-width: 375px) {
+            .header h1 {
+                font-size: 1.2rem;
+            }
+
+            .message {
+                max-width: 95%;
+                font-size: 0.9rem;
+            }
+
+            #input-container {
+                gap: 0.3rem;
+            }
+
+            button {
+                padding: 0.6rem 0.8rem;
+            }
+        }
+
+        /* Prevent rubber-band scrolling on iOS */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                overflow: hidden;
+            }
+            #chat-container {
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #1a1a1a;
+                color: #fff;
+            }
+
+            .header, #chat-container, #input-container {
+                background: #2d2d2d;
+            }
+
+            .header h1 {
+                color: #fff;
+            }
+
+            .ai-message {
+                background: #3d3d3d;
+                color: #fff;
+            }
+
+            #user-input {
+                background: #3d3d3d;
+                border-color: #4d4d4d;
+                color: #fff;
+            }
+
+            #user-input::placeholder {
+                color: #aaa;
+            }
+        }
+
+        /* iOS-specific styles */
+        @supports (-webkit-touch-callout: none) {
+            .container {
+                padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            }
+            
+            #input-container {
+                padding-bottom: max(0.8rem, env(safe-area-inset-bottom));
+                margin-bottom: env(safe-area-inset-bottom);
+            }
+            
+            /* Prevent double-tap zoom */
+            * { 
+                touch-action: manipulation;
+            }
+        }
+
+        /* iOS momentum scrolling */
+        #chat-container {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+
+        /* iOS-style buttons */
+        button {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        /* iOS-style input */
+        #user-input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        /* Add haptic feedback class */
+        .haptic-feedback {
+            animation: haptic 0.1s linear;
+        }
+
+        @keyframes haptic {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.98); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Chat Assistant</h1>
+        </div>
+        <div id="chat-container"></div>
+        <div class="loading" id="loading-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div id="input-container">
+            <input type="text" id="user-input" placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function appendMessage(message, isUser) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            messageDiv.textContent = message;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const message = input.value.trim();
+            
+            if (message) {
+                vibrate(); // Add haptic feedback
+                appendMessage(message, true);
+                input.value = '';
+                loadingIndicator.style.display = 'block';
+
+                try {
+                    const response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        vibrate(); // Error feedback
+                        appendMessage(`Error: ${data.error}`, false);
+                        return;
+                    }
+                    
+                    vibrate(); // Success feedback
+                    const aiResponse = data.choices[0].message.content;
+                    appendMessage(aiResponse, false);
+                } catch (error) {
+                    vibrate(); // Error feedback
+                    appendMessage(`Error: ${error.message}`, false);
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            }
+        }
+
+        // Add haptic feedback
+        function vibrate() {
+            if (navigator.vibrate) {
+                navigator.vibrate(10);
+            }
+        }
+
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        // Prevent bounce scrolling on iOS
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.id !== 'chat-container') {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html> 
