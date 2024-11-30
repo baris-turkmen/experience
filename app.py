@@ -39,26 +39,43 @@ def get_time():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     try:
-        user_message = request.json.get('message')
+        data = request.json
+        user_message = data.get('message')
+        image_url = data.get('image_url')
+        
         if not user_message:
             return jsonify({"error": "No message provided"}), 400
         
-        # Use the exact same configuration as the test script
+        message_content = []
+        
+        message_content.append({
+            "type": "text",
+            "text": "You are Yildiz Teknopark AI asisstant. Keep your response short and concise. " + user_message
+        })
+        
+        if image_url:
+            message_content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": image_url
+                }
+            })
+        
         completion = client.chat.completions.create(
             extra_headers={
                 "HTTP-Referer": os.getenv('SITE_URL'),
                 "X-Title": os.getenv('APP_NAME'),
             },
-            model="meta-llama/llama-3.1-8b-instruct",
+            model="anthropic/claude-3.5-sonnet",
             messages=[
                 {
                     "role": "user",
-                    "content": "My name is Qutaiba, i am research assistant. Dont mention my id or name in your response. but make your response as if you are talking to me. " + user_message
+                    "content": message_content
                 }
-            ]
+            ],
+            max_tokens=75
         )
         
-        # Add debug logging
         print("API Response received:", completion.choices[0].message.content)
         
         return jsonify({
@@ -70,7 +87,7 @@ def chat():
         })
     except Exception as e:
         error_msg = f"Error in /api/chat: {str(e)}"
-        print(error_msg)  # Server-side logging
+        print(error_msg)
         return jsonify({"error": error_msg}), 500
 
 @app.route('/')
