@@ -4,7 +4,7 @@ import json
 import os  # for environment variables
 from dotenv import load_dotenv
 from openai import OpenAI
-from elevenlabs import ElevenLabs  # Import ElevenLabs
+from elevenlabs import ElevenLabs, generate, stream, set_api_key  # Import ElevenLabs
 from typing import List, Dict
 from io import BytesIO
 from elevenlabs import stream
@@ -158,17 +158,16 @@ def text_to_speech():
         if not text:
             return jsonify({"error": "No text provided"}), 400
         
-        # Stream audio in real-time
-        audio_stream = elevenlabs_client.generate(
+        # Generate audio without streaming
+        audio = generate(
             text=text,
-            stream=True
+            voice_id="21m00Tcm4TlvDq8ikWAM",  # Your Turkish voice ID
+            model_id="eleven_turbo_v2"
         )
         
-        # Use Flask's Response to stream the audio
-        return Response(
-            stream(audio_stream),
-            mimetype='audio/mpeg'
-        )
+        # Return audio as a response
+        return Response(audio, mimetype='audio/mpeg')
+        
     except Exception as e:
         error_msg = f"Error in /api/text-to-speech: {str(e)}"
         print(error_msg)

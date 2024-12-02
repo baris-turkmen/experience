@@ -461,22 +461,25 @@
                 }
                 
                 vibrate();
-                const aiResponse = data.choices[0].message.content;
-                appendMessage(aiResponse, false);
+                if (data.choices[0].message.content) {
+                    const aiResponse = data.choices[0].message.content;
+                    appendMessage(aiResponse, false);
 
-                // Stream audio response automatically
-                const audioResponse = await fetch('/api/text-to-speech', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ text: aiResponse })
-                });
+                    // Get audio response
+                    const audioResponse = await fetch('/api/text-to-speech', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text: aiResponse })
+                    });
 
-                if (audioResponse.ok) {
-                    const audio = new Audio();
-                    audio.src = URL.createObjectURL(await audioResponse.blob());
-                    audio.play();
+                    if (audioResponse.ok) {
+                        const audioBlob = await audioResponse.blob();
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const audio = new Audio(audioUrl);
+                        audio.play();
+                    }
                 }
             } catch (error) {
                 vibrate();
