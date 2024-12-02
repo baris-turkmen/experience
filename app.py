@@ -8,6 +8,7 @@ from elevenlabs import ElevenLabs  # Import ElevenLabs
 from typing import List, Dict
 from io import BytesIO
 from elevenlabs import stream
+import logging
 
 # Try both methods of loading environment variables
 load_dotenv()
