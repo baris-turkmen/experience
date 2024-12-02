@@ -1,10 +1,13 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, send_file, Response
 import requests
 import json
 import os  # for environment variables
 from dotenv import load_dotenv
 from openai import OpenAI
+from elevenlabs import ElevenLabs  # Import ElevenLabs
 from typing import List, Dict
+from io import BytesIO
+from elevenlabs import stream
 
 # Try both methods of loading environment variables
 load_dotenv()
@@ -24,6 +27,11 @@ print("App Name:", os.getenv('APP_NAME'))
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv('OPENROUTER_API_KEY')
+)
+
+# Initialize ElevenLabs client
+elevenlabs_client = ElevenLabs(
+    api_key=os.getenv('ELEVENLABS_API_KEY')  # Ensure your API key is set in the environment
 )
 
 app = Flask(__name__)
@@ -84,7 +92,7 @@ def chat():
         
         message_content.append({
             "type": "text",
-            "text": "You are Yildiz Teknopark AI asisstant. Keep your response short and concise. " + user_message
+            "text": "You are Yildiz Teknopark AI asisstant. Keep your response short and concise in Turkish. " + user_message
         })
         
         if image_url:
@@ -114,15 +122,54 @@ def chat():
         
         print("API Response received:", assistant_response)
         
+        # Generate audio for the response using faster Turkish-compatible model
+        audio_generator = elevenlabs_client.text_to_speech.convert(
+            voice_id="21m00Tcm4TlvDq8ikWAM", 
+            model_id="eleven_turbo_v2",
+            text=assistant_response
+        )
+        # Convert generator to bytes
+        audio_content = b''.join(audio_generator)
+        
+        # Encode audio content to base64 for sending with JSON
+        import base64
+        audio_base64 = base64.b64encode(audio_content).decode('utf-8')
+        
         return jsonify({
             "choices": [{
                 "message": {
                     "content": assistant_response
                 }
-            }]
+            }],
+            "audio": audio_base64
         })
     except Exception as e:
         error_msg = f"Error in /api/chat: {str(e)}"
+        print(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+@app.route('/api/text-to-speech', methods=['POST'])
+def text_to_speech():
+    try:
+        data = request.json
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({"error": "No text provided"}), 400
+        
+        # Stream audio in real-time
+        audio_stream = elevenlabs_client.generate(
+            text=text,
+            stream=True
+        )
+        
+        # Use Flask's Response to stream the audio
+        return Response(
+            stream(audio_stream),
+            mimetype='audio/mpeg'
+        )
+    except Exception as e:
+        error_msg = f"Error in /api/text-to-speech: {str(e)}"
         print(error_msg)
         return jsonify({"error": error_msg}), 500
 
