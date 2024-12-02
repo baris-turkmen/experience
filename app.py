@@ -1,14 +1,13 @@
-from flask import Flask, jsonify, request, render_template, send_file, Response
+from flask import Flask, jsonify, request, render_template, send_file, Response, stream_with_context
 import requests
 import json
 import os  # for environment variables
 from dotenv import load_dotenv
 from openai import OpenAI
-from elevenlabs import ElevenLabs, generate, stream, set_api_key  # Import ElevenLabs
-from typing import List, Dict
-from io import BytesIO
+from elevenlabs.client import ElevenLabs
 from elevenlabs import stream
 import logging
+from typing import List, Dict
 
 # Try both methods of loading environment variables
 load_dotenv()
@@ -32,7 +31,7 @@ client = OpenAI(
 
 # Initialize ElevenLabs client
 elevenlabs_client = ElevenLabs(
-    api_key=os.getenv('ELEVENLABS_API_KEY')  # Ensure your API key is set in the environment
+    api_key=os.getenv('ELEVENLABS_API_KEY')
 )
 
 app = Flask(__name__)
@@ -158,15 +157,18 @@ def text_to_speech():
         if not text:
             return jsonify({"error": "No text provided"}), 400
         
-        # Generate audio without streaming
-        audio = generate(
+        # Generate audio stream with required voice_id and model_id parameters
+        audio_stream = elevenlabs_client.text_to_speech.convert_as_stream(
             text=text,
-            voice_id="21m00Tcm4TlvDq8ikWAM",  # Your Turkish voice ID
-            model_id="eleven_turbo_v2"
+            voice_id="21m00Tcm4TlvDq8ikWAM",  # Turkish voice ID
+            model_id="eleven_multilingual_v2"  # Multilingual model ID
         )
         
-        # Return audio as a response
-        return Response(audio, mimetype='audio/mpeg')
+        # Return audio as a streaming response
+        return Response(
+            stream_with_context(audio_stream),
+            mimetype='audio/mpeg'
+        )
         
     except Exception as e:
         error_msg = f"Error in /api/text-to-speech: {str(e)}"
