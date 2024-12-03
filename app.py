@@ -15,8 +15,15 @@ import locale
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 
-# Set the locale to use UTF-8
-locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+# Replace the locale setting with a try-except block
+try:
+    locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    except locale.Error:
+        # Fall back to default locale if neither option works
+        pass
 
 # Try both methods of loading environment variables
 load_dotenv()
@@ -25,7 +32,7 @@ load_dotenv()
 if os.getenv('OPENROUTER_API_KEY') == 'your_api_key_here':
     os.environ['OPENROUTER_API_KEY'] = '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'
     os.environ['SITE_URL'] = 'http://localhost:5000'
-    os.environ['APP_NAME'] = 'YourAppName'
+    os.environ['APP_NAME'] = 'Yıldız AI'
 
 # Debug: Print environment variables
 print("API Key:", os.getenv('OPENROUTER_API_KEY'))
@@ -91,8 +98,9 @@ def get_time():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     try:
-        data = request.get_json(force=True)  # Force JSON parsing with UTF-8
+        data = request.get_json(force=True)
         user_message = data.get('message', '').strip()
+        image_url = data.get('image_url', None)
         
         if not user_message:
             return jsonify({"error": "No message provided"}), 400
