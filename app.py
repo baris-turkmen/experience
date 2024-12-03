@@ -25,21 +25,10 @@ except locale.Error:
         # Fall back to default locale if neither option works
         pass
 
-# Try both methods of loading environment variables
+# Load environment variables
 load_dotenv()
 
-# Manually set if not loaded from .env
-if os.getenv('OPENROUTER_API_KEY') == 'your_api_key_here':
-    os.environ['OPENROUTER_API_KEY'] = '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'
-    os.environ['SITE_URL'] = 'http://localhost:5000'
-    os.environ['APP_NAME'] = 'Yıldız AI'
-
-# Debug: Print environment variables
-print("API Key:", os.getenv('OPENROUTER_API_KEY'))
-print("Site URL:", os.getenv('SITE_URL'))
-print("App Name:", os.getenv('APP_NAME'))
-
-# Initialize OpenAI client - move this to global scope
+# Initialize OpenAI client
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv('OPENROUTER_API_KEY')
