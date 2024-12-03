@@ -92,6 +92,7 @@ def chat():
     try:
         data = request.get_json(force=True)
         user_message = data.get('message', '').strip()
+        logging.debug(f"Received message: {user_message}")
         image_url = data.get('image_url', None)
         
         if not user_message:
@@ -155,9 +156,8 @@ def chat():
             "audio": audio_base64
         }), 200, {'Content-Type': 'application/json; charset=utf-8'}
     except Exception as e:
-        error_msg = f"Error in /api/chat: {str(e)}"
-        print(error_msg, file=sys.stderr)
-        return jsonify({"error": error_msg}), 500
+        logging.error(f"Error in /api/chat: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/text-to-speech', methods=['POST'])
 def text_to_speech():
