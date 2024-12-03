@@ -10,10 +10,11 @@ import logging
 from typing import List, Dict
 import sys
 import locale
+import io
 
 # Set UTF-8 as the default encoding for Python
-sys.stdout.reconfigure(encoding='utf-8')
-sys.stderr.reconfigure(encoding='utf-8')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 # Replace the locale setting with a try-except block
 try:
@@ -41,6 +42,8 @@ elevenlabs_client = ElevenLabs(
 
 app = Flask(__name__)
 app.json.ensure_ascii = False  # This allows non-ASCII characters in JSON responses
+app.config['JSON_AS_ASCII'] = False
+app.config['JSONIFY_MIMETYPE'] = "application/json; charset=utf-8"
 
 class Message:
     def __init__(self, role: str, content: List[Dict] | str):
@@ -96,8 +99,8 @@ def chat():
         
         message_content = []
         
-        # Ensure the message is properly encoded
-        system_prompt = "You are Yildiz Teknopark AI asisstant. Keep your response short and concise in Turkish. "
+        # Encode the system prompt properly
+        system_prompt = "You are Yildiz Teknopark AI asisstant. Keep your response short and concise in Turkish. ".encode('utf-8').decode('utf-8')
         message_content.append({
             "type": "text",
             "text": system_prompt + user_message
