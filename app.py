@@ -93,27 +93,16 @@ def chat():
         data = request.get_json(force=True)
         user_message = data.get('message', '').strip()
         logging.debug(f"Received message: {user_message}")
-        image_url = data.get('image_url', None)
         
         if not user_message:
             return jsonify({"error": "No message provided"}), 400
         
-        message_content = []
-        
         # Encode the system prompt properly
         system_prompt = "You are Yildiz Teknopark AI asisstant. Keep your response short and concise in Turkish. ".encode('utf-8').decode('utf-8')
-        message_content.append({
+        message_content = [{
             "type": "text",
             "text": system_prompt + user_message
-        })
-        
-        if image_url:
-            message_content.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": image_url
-                }
-            })
+        }]
 
         # Add user message to conversation history
         conversation_manager.add_message("user", message_content)
