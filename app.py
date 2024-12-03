@@ -61,7 +61,7 @@ def chat():
         if not user_message:
             return jsonify({"error": "No message provided"}), 400
         
-        system_prompt = "You are Yildiz Teknopark AI asisstant. Keep your response short and concise in Turkish. "
+        system_prompt = "You are Yildiz Teknopark AI asisstant. Keep your response short and concise in Turkish. ".encode('utf-8').decode('utf-8')
         message_content = [{
             "type": "text",
             "text": system_prompt + user_message
@@ -69,17 +69,20 @@ def chat():
 
         conversation_manager.add_message("user", message_content)
         
+        headers = {
+            "HTTP-Referer": os.getenv('SITE_URL'),
+            "X-Title": os.getenv('APP_NAME'),
+            "Content-Type": "application/json; charset=utf-8"
+        }
+        
         completion = client.chat.completions.create(
-            extra_headers={
-                "HTTP-Referer": os.getenv('SITE_URL'),
-                "X-Title": os.getenv('APP_NAME'),
-            },
+            extra_headers=headers,
             model="anthropic/claude-3.5-sonnet",
             messages=conversation_manager.get_messages_for_api(),
             max_tokens=200
         )
         
-        assistant_response = completion.choices[0].message.content
+        assistant_response = completion.choices[0].message.content.encode('utf-8').decode('utf-8')
         conversation_manager.add_message("assistant", assistant_response)
         
         # Generate audio
