@@ -8,6 +8,15 @@ from elevenlabs.client import ElevenLabs
 from elevenlabs import stream
 import logging
 from typing import List, Dict
+import sys
+import locale
+
+# Set UTF-8 as the default encoding for Python
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
+
+# Set the locale to use UTF-8
+locale.setlocale(locale.LC_ALL, 'C.UTF-8')
 
 # Try both methods of loading environment variables
 load_dotenv()
@@ -35,6 +44,7 @@ elevenlabs_client = ElevenLabs(
 )
 
 app = Flask(__name__)
+app.json.ensure_ascii = False  # This allows non-ASCII characters in JSON responses
 
 class Message:
     def __init__(self, role: str, content: List[Dict] | str):
@@ -81,18 +91,19 @@ def get_time():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     try:
-        data = request.json
-        user_message = data.get('message')
-        image_url = data.get('image_url')
+        data = request.get_json(force=True)  # Force JSON parsing with UTF-8
+        user_message = data.get('message', '').strip()
         
         if not user_message:
             return jsonify({"error": "No message provided"}), 400
         
         message_content = []
         
+        # Ensure the message is properly encoded
+        system_prompt = "You are Yildiz Teknopark AI asisstant. Keep your response short and concise in Turkish. "
         message_content.append({
             "type": "text",
-            "text": "You are Yildiz Teknopark AI asisstant. Keep your response short and concise in Turkish. " + user_message
+            "text": system_prompt + user_message
         })
         
         if image_url:
@@ -142,10 +153,10 @@ def chat():
                 }
             }],
             "audio": audio_base64
-        })
+        }), 200, {'Content-Type': 'application/json; charset=utf-8'}
     except Exception as e:
         error_msg = f"Error in /api/chat: {str(e)}"
-        print(error_msg)
+        print(error_msg, file=sys.stderr)
         return jsonify({"error": error_msg}), 500
 
 @app.route('/api/text-to-speech', methods=['POST'])
@@ -180,4 +191,4 @@ def home():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000) 
+    app.run(host='0.0.0.0', port=5000, debug=True) 
