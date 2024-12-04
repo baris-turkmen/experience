@@ -465,17 +465,9 @@
                     const aiResponse = data.choices[0].message.content;
                     appendMessage(aiResponse, false);
 
-                    // Get audio response
-                    const audioResponse = await fetch('/api/text-to-speech', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ text: aiResponse })
-                    });
-
-                    if (audioResponse.ok) {
-                        const audioBlob = await audioResponse.blob();
+                    // Play audio if available
+                    if (data.audio) {
+                        const audioBlob = base64ToBlob(data.audio, 'audio/mpeg');
                         const audioUrl = URL.createObjectURL(audioBlob);
                         const audio = new Audio(audioUrl);
                         audio.play();
