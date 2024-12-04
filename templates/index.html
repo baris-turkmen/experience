@@ -5,23 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI Chat Assistant</title>
     
-    <!-- iOS specific meta tags -->
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/icons/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AI Chat">
-    
-    <!-- iOS icons -->
-    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon-180x180.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="/static/icons/icon-167x167.png">
-    
-    <!-- Splash screens for iOS -->
-    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-2048-2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1668-2388.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1536-2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1125-2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
-    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1242-2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Yıldız Teknopark AI Chat Assistant">
     
     <!-- PWA manifest -->
     <link rel="manifest" href="/static/manifest.json">
@@ -152,6 +150,9 @@
         }
 
         #user-input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
             flex: 1;
             padding: 12px 16px;
             border-radius: 20px;
@@ -160,7 +161,6 @@
             font-size: 16px;
             transition: all 0.2s ease;
             outline: none;
-            -webkit-appearance: none;
             color: var(--text-light);
         }
 
@@ -348,13 +348,6 @@
         button {
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
-        }
-
-        /* Fix input appearance */
-        #user-input {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
         }
 
         /* Fix iOS momentum scrolling */
