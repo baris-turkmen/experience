@@ -86,10 +86,17 @@ def chat():
         conversation_manager.add_message("assistant", assistant_response)
         
         # Generate audio
+        # Use a more dynamic voice configuration with enhanced parameters
         audio_generator = elevenlabs_client.text_to_speech.convert(
             voice_id="21m00Tcm4TlvDq8ikWAM",
-            model_id="eleven_multilingual_v2", # Changed to multilingual model
-            text=assistant_response
+            model_id="eleven_multilingual_v2",
+            text=assistant_response,
+            voice_settings={
+                "stability": 0.71,  # Balanced between consistent and variable
+                "similarity_boost": 0.75,  # Maintain voice characteristics while allowing expression
+                "style": 0.6,  # Add some personality to the voice
+                "use_speaker_boost": True  # Enhance clarity
+            }
         )
         audio_content = b''.join(audio_generator)
         audio_base64 = base64.b64encode(audio_content).decode('utf-8')
