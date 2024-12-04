@@ -87,13 +87,12 @@ def chat():
         
         # Generate audio
         audio_generator = elevenlabs_client.text_to_speech.convert(
-            voice_id="21m00Tcm4TlvDq8ikWAM", 
-            model_id="eleven_turbo_v2",
+            voice_id="21m00Tcm4TlvDq8ikWAM",
+            model_id="eleven_multilingual_v2", # Changed to multilingual model
             text=assistant_response
         )
         audio_content = b''.join(audio_generator)
         audio_base64 = base64.b64encode(audio_content).decode('utf-8')
-        
         return jsonify({
             "choices": [{
                 "message": {
