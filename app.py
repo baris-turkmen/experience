@@ -54,14 +54,14 @@ conversation_manager = ConversationManager()
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    try:
+    try:    
         data = request.get_json(force=True)
         user_message = data.get('message', '').strip()
         
         if not user_message:
             return jsonify({"error": "No message provided"}), 400
         
-        system_prompt = "You are Yildiz Teknopark AI asisstant. Keep your response short and concise in Turkish. ".encode('utf-8').decode('utf-8')
+        system_prompt = "You are yildiz teknopark's AI assistant. Keep your response short and concise in Turkish. ".encode('utf-8').decode('utf-8')
         message_content = [{
             "type": "text",
             "text": system_prompt + user_message
@@ -76,7 +76,7 @@ def chat():
         }
         
         completion = client.chat.completions.create(
-            extra_headers=headers,
+            extra_headers=headers, 
             model="anthropic/claude-3.5-sonnet",
             messages=conversation_manager.get_messages_for_api(),
             max_tokens=200
