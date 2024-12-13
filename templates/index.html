@@ -179,6 +179,7 @@
             color: white;
             transition: all 0.2s ease;
             cursor: pointer;
+            appearance: none;
             -webkit-appearance: none;
             border: none;
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
@@ -399,6 +400,50 @@
             position: relative;
             padding-bottom: 24px; /* Make room for the speak button */
         }
+
+        .image-upload-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--primary-color);
+            transition: all 0.2s ease;
+        }
+
+        .image-upload-button:hover {
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        #preview-container {
+            display: none;
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -413,6 +458,13 @@
             <span></span>
         </div>
         <div id="input-container">
+            <label for="image-upload" class="image-upload-button">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                </svg>
+            </label>
+            <input type="file" id="image-upload" accept="image/*" style="display: none">
             <input type="text" id="user-input" placeholder="Aklınızda bulunan sorularınızı yazınız..." onkeypress="handleKeyPress(event)">
             <button onclick="sendMessage()">Gönder</button>
         </div>
@@ -425,16 +477,55 @@
             }
         }
 
+        let currentImageData = null;
+
+        document.getElementById('image-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentImageData = e.target.result;
+                    showImagePreview(currentImageData);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function showImagePreview(imageData) {
+            const previewContainer = document.createElement('div');
+            previewContainer.id = 'preview-container';
+            previewContainer.innerHTML = `
+                <img src="${imageData}" class="image-preview">
+                <div class="remove-image" onclick="removeImage()">×</div>
+            `;
+            
+            const existingPreview = document.getElementById('preview-container');
+            if (existingPreview) {
+                existingPreview.remove();
+            }
+            
+            document.getElementById('chat-container').appendChild(previewContainer);
+            previewContainer.style.display = 'block';
+        }
+
+        function removeImage() {
+            currentImageData = null;
+            const previewContainer = document.getElementById('preview-container');
+            if (previewContainer) {
+                previewContainer.remove();
+            }
+        }
+
         async function sendMessage() {
             const input = document.getElementById('user-input');
             const loadingIndicator = document.getElementById('loading-indicator');
             const message = input.value.trim();
             
-            if (!message) return;
+            if (!message && !currentImageData) return;
             
             try {
                 input.disabled = true;
-                appendMessage(message, true);
+                appendMessage(message, true, currentImageData);
                 input.value = '';
                 loadingIndicator.style.display = 'block';
 
@@ -443,7 +534,10 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ 
+                        message: message,
+                        image: currentImageData
+                    })
                 });
 
                 const data = await response.json();
@@ -475,6 +569,9 @@
                 input.disabled = false;
                 input.focus();
             }
+
+            // Clear the image after sending
+            removeImage();
         }
 
         // Add this helper function to convert base64 to Blob
@@ -487,30 +584,34 @@
             return new Blob([bytes], { type: type });
         }
 
-        function appendMessage(message, isUser) {
-            try {
-                const chatContainer = document.getElementById('chat-container');
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
-                
+        function appendMessage(message, isUser, imageData = null) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            
+            if (imageData) {
+                const img = document.createElement('img');
+                img.src = imageData;
+                img.className = 'image-preview';
+                messageDiv.appendChild(img);
+            }
+
+            if (message) {
                 const messageContent = document.createElement('div');
                 messageContent.textContent = message;
-                
-                const timestamp = document.createElement('div');
-                timestamp.className = 'timestamp';
-                timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                
                 messageDiv.appendChild(messageContent);
-                messageDiv.appendChild(timestamp);
-                chatContainer.appendChild(messageDiv);
-                
-                setTimeout(() => {
-                    messageDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                }, 100);
-            } catch (error) {
-                console.error('Failed to append message:', error);
-                alert('Failed to send message. Please try again.');
             }
+            
+            const timestamp = document.createElement('div');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.appendChild(timestamp);
+            chatContainer.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 100);
         }
 
         // Add haptic feedback

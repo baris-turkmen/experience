@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 import logging
 from typing import List, Dict
 import base64
+from PIL import Image
+import io
 
 # Load environment variables
 load_dotenv()
@@ -57,15 +59,29 @@ def chat():
     try:    
         data = request.get_json(force=True)
         user_message = data.get('message', '').strip()
+        image_data = data.get('image')  # Base64 encoded image
         
-        if not user_message:
-            return jsonify({"error": "No message provided"}), 400
+        message_content = []
         
-        system_prompt = "You are yildiz teknopark's AI assistant. Keep your response short and concise in Turkish. ".encode('utf-8').decode('utf-8')
-        message_content = [{
+        # Add system prompt
+        system_prompt = "You are yildiz teknopark's AI assistant. Keep your response short and concise in Turkish. "
+        message_content.append({
             "type": "text",
             "text": system_prompt + user_message
-        }]
+        })
+        
+        # Add image if provided
+        if image_data:
+            # Remove the data URL prefix if present
+            if 'base64,' in image_data:
+                image_data = image_data.split('base64,')[1]
+            
+            message_content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{image_data}"
+                }
+            })
 
         conversation_manager.add_message("user", message_content)
         
