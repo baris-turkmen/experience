@@ -59,7 +59,7 @@ def chat():
     try:    
         data = request.get_json(force=True)
         user_message = data.get('message', '').strip()
-        image_data = data.get('image')  # Base64 encoded image
+        image_data = data.get('image')
         
         message_content = []
         
@@ -70,18 +70,25 @@ def chat():
             "text": system_prompt + user_message
         })
         
-        # Add image if provided
+        # Add image if provided and properly format it
         if image_data:
-            # Remove the data URL prefix if present
-            if 'base64,' in image_data:
-                image_data = image_data.split('base64,')[1]
-            
-            message_content.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/jpeg;base64,{image_data}"
-                }
-            })
+            try:
+                # Remove data URL prefix if present
+                if 'data:image/' in image_data:
+                    # Extract the base64 part and image type
+                    image_format = image_data.split(';')[0].split('/')[1]
+                    base64_data = image_data.split('base64,')[1]
+                    
+                    # Format the image URL according to OpenAI's requirements
+                    message_content.append({
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/{image_format};base64,{base64_data}"
+                        }
+                    })
+            except Exception as e:
+                logging.error(f"Image processing error: {str(e)}")
+                return jsonify({"error": "Invalid image format"}), 400
 
         conversation_manager.add_message("user", message_content)
         
@@ -93,7 +100,7 @@ def chat():
         
         completion = client.chat.completions.create(
             extra_headers=headers, 
-            model="anthropic/claude-3.5-sonnet",
+            model="anthropic/claude-3-opus",
             messages=conversation_manager.get_messages_for_api(),
             max_tokens=200
         )
@@ -102,20 +109,20 @@ def chat():
         conversation_manager.add_message("assistant", assistant_response)
         
         # Generate audio
-        # Use a more dynamic voice configuration with enhanced parameters
         audio_generator = elevenlabs_client.text_to_speech.convert(
             voice_id="21m00Tcm4TlvDq8ikWAM",
             model_id="eleven_multilingual_v2",
             text=assistant_response,
             voice_settings={
-                "stability": 0.71,  # Balanced between consistent and variable
-                "similarity_boost": 0.75,  # Maintain voice characteristics while allowing expression
-                "style": 0.6,  # Add some personality to the voice
-                "use_speaker_boost": True  # Enhance clarity
+                "stability": 0.71,
+                "similarity_boost": 0.75,
+                "style": 0.6,
+                "use_speaker_boost": True
             }
         )
         audio_content = b''.join(audio_generator)
         audio_base64 = base64.b64encode(audio_content).decode('utf-8')
+        
         return jsonify({
             "choices": [{
                 "message": {

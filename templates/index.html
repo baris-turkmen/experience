@@ -444,6 +444,28 @@
             cursor: pointer;
             font-size: 14px;
         }
+
+        .upload-indicator {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(37, 99, 235, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .image-preview-container {
+            position: relative;
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(243, 244, 246, 0.5);
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body>
@@ -456,6 +478,9 @@
             <span></span>
             <span></span>
             <span></span>
+        </div>
+        <div id="upload-indicator" class="upload-indicator">
+            Processing image...
         </div>
         <div id="input-container">
             <label for="image-upload" class="image-upload-button">
@@ -479,25 +504,111 @@
 
         let currentImageData = null;
 
-        document.getElementById('image-upload').addEventListener('change', function(e) {
+        document.getElementById('image-upload').addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    currentImageData = e.target.result;
+                try {
+                    // Show upload indicator
+                    const indicator = document.getElementById('upload-indicator');
+                    indicator.style.display = 'block';
+
+                    if (file.size > 20 * 1024 * 1024) {
+                        indicator.textContent = 'Image too large (max 20MB)';
+                        setTimeout(() => {
+                            indicator.style.display = 'none';
+                        }, 2000);
+                        return;
+                    }
+
+                    const loadImage = (url) => {
+                        return new Promise((resolve, reject) => {
+                            const img = new Image();
+                            img.onload = () => resolve(img);
+                            img.onerror = reject;
+                            img.src = url;
+                        });
+                    };
+
+                    const readFileAsDataURL = (file) => {
+                        return new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(file);
+                        });
+                    };
+
+                    const dataUrl = await readFileAsDataURL(file);
+                    const img = await loadImage(dataUrl);
+
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDimension = 2048;
+
+                    if (width > maxDimension || height > maxDimension) {
+                        if (width > height) {
+                            height = (height / width) * maxDimension;
+                            width = maxDimension;
+                        } else {
+                            width = (width / height) * maxDimension;
+                            height = maxDimension;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    currentImageData = canvas.toDataURL('image/jpeg', 0.92);
+                    
+                    if (!currentImageData.startsWith('data:image/jpeg;base64,')) {
+                        const base64Data = currentImageData.split(',')[1];
+                        currentImageData = `data:image/jpeg;base64,${base64Data}`;
+                    }
+
+                    // When processing is complete
+                    indicator.textContent = 'Image ready!';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                    }, 1500);
+
                     showImagePreview(currentImageData);
-                };
-                reader.readAsDataURL(file);
+                } catch (error) {
+                    console.error('Image processing error:', error);
+                    const indicator = document.getElementById('upload-indicator');
+                    indicator.textContent = 'Image processing failed';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                    }, 2000);
+                }
             }
         });
 
         function showImagePreview(imageData) {
+            if (!imageData) return;
+            
             const previewContainer = document.createElement('div');
             previewContainer.id = 'preview-container';
-            previewContainer.innerHTML = `
-                <img src="${imageData}" class="image-preview">
-                <div class="remove-image" onclick="removeImage()">×</div>
-            `;
+            previewContainer.style.position = 'relative';
+            previewContainer.style.marginBottom = '10px';
+            
+            const img = document.createElement('img');
+            img.src = imageData;
+            img.className = 'image-preview';
+            img.style.maxWidth = '200px';
+            img.style.maxHeight = '200px';
+            img.style.objectFit = 'contain';
+            
+            const removeButton = document.createElement('div');
+            removeButton.className = 'remove-image';
+            removeButton.innerHTML = '×';
+            removeButton.onclick = removeImage;
+            
+            previewContainer.appendChild(img);
+            previewContainer.appendChild(removeButton);
             
             const existingPreview = document.getElementById('preview-container');
             if (existingPreview) {
@@ -505,7 +616,6 @@
             }
             
             document.getElementById('chat-container').appendChild(previewContainer);
-            previewContainer.style.display = 'block';
         }
 
         function removeImage() {
@@ -529,6 +639,17 @@
                 input.value = '';
                 loadingIndicator.style.display = 'block';
 
+                let imageToSend = null;
+                if (currentImageData) {
+                    try {
+                        const base64Data = currentImageData.split(',')[1];
+                        imageToSend = `data:image/jpeg;base64,${base64Data}`;
+                    } catch (error) {
+                        console.error('Image formatting error:', error);
+                        throw new Error('Invalid image format');
+                    }
+                }
+
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {
@@ -536,16 +657,18 @@
                     },
                     body: JSON.stringify({ 
                         message: message,
-                        image: currentImageData
+                        image: imageToSend
                     })
                 });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
 
                 const data = await response.json();
                 
                 if (data.error) {
-                    vibrate();
-                    appendMessage(`Error: ${data.error}`, false);
-                    return;
+                    throw new Error(data.error);
                 }
                 
                 vibrate();
@@ -553,25 +676,23 @@
                     const aiResponse = data.choices[0].message.content;
                     appendMessage(aiResponse, false);
 
-                    // Play audio if available
                     if (data.audio) {
                         const audioBlob = base64ToBlob(data.audio, 'audio/mpeg');
                         const audioUrl = URL.createObjectURL(audioBlob);
                         const audio = new Audio(audioUrl);
-                        audio.play();
+                        await audio.play().catch(console.error);
                     }
                 }
             } catch (error) {
+                console.error('Error:', error);
                 vibrate();
                 appendMessage(`Error: ${error.message}`, false);
             } finally {
                 loadingIndicator.style.display = 'none';
                 input.disabled = false;
                 input.focus();
+                removeImage();
             }
-
-            // Clear the image after sending
-            removeImage();
         }
 
         // Add this helper function to convert base64 to Blob
