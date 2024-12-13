@@ -97,14 +97,12 @@ def chat():
             "X-Title": os.getenv('APP_NAME'),
             "Content-Type": "application/json; charset=utf-8"
         }
-        
         completion = client.chat.completions.create(
             extra_headers=headers, 
-            model="anthropic/claude-3-opus",
+            model="anthropic/claude-3.5-sonnet",
             messages=conversation_manager.get_messages_for_api(),
             max_tokens=200
         )
-        
         assistant_response = completion.choices[0].message.content.encode('utf-8').decode('utf-8')
         conversation_manager.add_message("assistant", assistant_response)
         
