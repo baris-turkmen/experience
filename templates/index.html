@@ -159,11 +159,11 @@
             padding: 12px 16px;
             border-radius: 20px;
             border: 1px solid var(--border-light);
-            background: var(--gray-light);
+            background: white;
             font-size: 16px;
             transition: all 0.2s ease;
             outline: none;
-            color: var(--text-light);
+            color: #333;
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
             -webkit-user-select: text;
             user-select: text;
@@ -804,84 +804,131 @@
             const chatContainer = document.getElementById('chat-container');
             const container = document.querySelector('.container');
             let isKeyboardVisible = false;
+            let lastTapTime = 0;
 
-            // Prevent default touch behavior
-            document.addEventListener('touchmove', function(e) {
-                if (e.target.id !== 'chat-container') {
+            // Improved touch handling
+            function handleInputTap(e) {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTapTime;
+                
+                if (tapLength < 500 && tapLength > 0) {
                     e.preventDefault();
                 }
-            }, { passive: false });
-
-            // Handle input focus
-            userInput.addEventListener('focus', (e) => {
-                e.preventDefault();
-                isKeyboardVisible = true;
                 
-                // Add a small delay to let the keyboard appear
-                setTimeout(() => {
-                    // Scroll the chat container to bottom
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                    
-                    // On iOS, ensure the input is visible
-                    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-                        window.scrollTo(0, 0);
-                        document.body.scrollTop = 0;
-                        userInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                    }
-                }, 300);
-            });
-
-            // Prevent input blur
-            userInput.addEventListener('blur', (e) => {
-                if (isKeyboardVisible) {
+                lastTapTime = currentTime;
+                
+                if (!isKeyboardVisible) {
                     e.preventDefault();
                     userInput.focus();
                 }
+            }
+
+            userInput.addEventListener('touchend', handleInputTap);
+
+            // Enhanced input focus handling
+            userInput.addEventListener('focus', (e) => {
+                isKeyboardVisible = true;
+                
+                requestAnimationFrame(() => {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    
+                    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                        window.scrollTo(0, 0);
+                        document.body.scrollTop = 0;
+                        
+                        setTimeout(() => {
+                            userInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                            container.style.height = `${window.visualViewport.height}px`;
+                        }, 300);
+                    }
+                });
             });
 
-            // Handle viewport height changes (keyboard appearance)
+            // Improved blur prevention
+            userInput.addEventListener('blur', (e) => {
+                if (isKeyboardVisible && !/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                    e.preventDefault();
+                    requestAnimationFrame(() => {
+                        userInput.focus();
+                    });
+                }
+            });
+
+            // Enhanced viewport handling
             if (window.visualViewport) {
                 let viewportHeight = window.visualViewport.height;
+                let resizeTimeout;
+
                 window.visualViewport.addEventListener('resize', () => {
-                    // Only adjust if the height change is significant (keyboard showing/hiding)
-                    if (Math.abs(window.visualViewport.height - viewportHeight) > 150) {
-                        if (window.visualViewport.height < viewportHeight) {
-                            // Keyboard is shown
-                            container.style.height = `${window.visualViewport.height}px`;
-                            chatContainer.scrollTop = chatContainer.scrollHeight;
-                            isKeyboardVisible = true;
-                        } else {
-                            // Keyboard is hidden
-                            container.style.height = '100vh';
-                            isKeyboardVisible = false;
+                    clearTimeout(resizeTimeout);
+                    
+                    resizeTimeout = setTimeout(() => {
+                        const heightChange = Math.abs(window.visualViewport.height - viewportHeight);
+                        
+                        if (heightChange > 150) {
+                            isKeyboardVisible = window.visualViewport.height < viewportHeight;
+                            
+                            requestAnimationFrame(() => {
+                                container.style.height = `${window.visualViewport.height}px`;
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            });
+                            
+                            viewportHeight = window.visualViewport.height;
                         }
-                        viewportHeight = window.visualViewport.height;
-                    }
+                    }, 100);
                 });
             }
 
-            // Handle send button click
-            document.querySelector('button').addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                sendMessage();
-            });
-
-            // Prevent document level touch events from dismissing keyboard
+            // Improved touch event handling
             document.addEventListener('touchend', (e) => {
                 if (isKeyboardVisible && e.target !== userInput) {
                     e.preventDefault();
                 }
             }, { passive: false });
 
-            // Add this to handle orientation changes
+            // Enhanced orientation change handling
             window.addEventListener('orientationchange', () => {
+                isKeyboardVisible = false;
+                
                 setTimeout(() => {
-                    if (isKeyboardVisible) {
-                        window.scrollTo(0, 0);
+                    window.scrollTo(0, 0);
+                    container.style.height = `${window.visualViewport.height}px`;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    
+                    if (document.activeElement === userInput) {
                         userInput.focus();
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
                     }
-                }, 50);
+                }, 100);
+            });
+
+            // Prevent unwanted scrolling
+            document.addEventListener('touchmove', (e) => {
+                if (e.target.id !== 'chat-container') {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            // Improved send button handling
+            const sendButton = document.querySelector('button');
+            sendButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                sendMessage();
+            });
+
+            // Reset keyboard state when page becomes visible
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    isKeyboardVisible = false;
+                }
+            });
+
+            // Handle initial page load
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    window.scrollTo(0, 0);
+                    container.style.height = `${window.visualViewport.height}px`;
+                }, 100);
             });
         });
 
@@ -899,4 +946,5 @@
         }
     </script>
 </body>
+</html>
 </html>
