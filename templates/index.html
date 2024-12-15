@@ -67,7 +67,7 @@
             height: 100dvh;
             display: flex;
             flex-direction: column;
-            position: fixed;
+            position: relative;
             top: 0;
             left: 0;
             right: 0;
@@ -134,7 +134,7 @@
         }
 
         #input-container {
-            position: fixed;
+            position: sticky;
             bottom: 0;
             left: 0;
             right: 0;
@@ -146,6 +146,9 @@
             -webkit-backdrop-filter: blur(10px);
             border-top: 1px solid var(--border-light);
             border-radius: 0;
+            z-index: 1000;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
 
         #user-input {
@@ -162,6 +165,9 @@
             outline: none;
             color: var(--text-light);
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+            -webkit-user-select: text;
+            user-select: text;
+            z-index: 1001;
         }
 
         #user-input:focus {
@@ -466,6 +472,56 @@
             background: rgba(58, 58, 60, 0.5);
             border-radius: 12px;
         }
+
+        /* Fix for iOS input issues */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                /* Prevent scroll on iOS */
+                position: fixed;
+                width: 100%;
+                height: 100%;
+            }
+
+            #chat-container {
+                /* Allow scroll in chat container */
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: calc(80px + env(safe-area-inset-bottom));
+            }
+
+            #input-container {
+                /* Ensure input container stays above keyboard */
+                position: sticky;
+                bottom: 0;
+                padding-bottom: max(12px, env(safe-area-inset-bottom));
+                background: rgba(255, 255, 255, 0.95);
+            }
+        }
+
+        /* iOS-specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            .container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            #chat-container {
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: calc(80px + env(safe-area-inset-bottom));
+                height: calc(100% - 60px - env(safe-area-inset-bottom));
+            }
+
+            #input-container {
+                position: fixed;
+                bottom: 0;
+                padding-bottom: max(12px, env(safe-area-inset-bottom));
+                background: rgba(255, 255, 255, 0.95);
+            }
+        }
     </style>
 </head>
 <body>
@@ -746,54 +802,86 @@
         document.addEventListener('DOMContentLoaded', () => {
             const userInput = document.getElementById('user-input');
             const chatContainer = document.getElementById('chat-container');
+            const container = document.querySelector('.container');
+            let isKeyboardVisible = false;
 
-            userInput.addEventListener('focus', () => {
-                setTimeout(() => {
-                    window.scrollTo(0, 0);
-                    document.body.scrollTop = 0;
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                }, 300);
-            });
-
-            window.addEventListener('resize', () => {
-                if (document.activeElement.tagName === 'INPUT') {
-                    setTimeout(() => {
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
-                    }, 100);
-                }
-            });
-
-            // Prevent bounce scrolling on iOS
+            // Prevent default touch behavior
             document.addEventListener('touchmove', function(e) {
                 if (e.target.id !== 'chat-container') {
                     e.preventDefault();
                 }
             }, { passive: false });
 
-            // Add pull-to-refresh functionality
-            let touchStart = 0;
-            let touchEnd = 0;
-
-            chatContainer.addEventListener('touchstart', e => {
-                touchStart = e.touches[0].clientY;
-            }, { passive: true });
-
-            chatContainer.addEventListener('touchend', e => {
-                touchEnd = e.changedTouches[0].clientY;
-                if (touchStart - touchEnd > 100) {
+            // Handle input focus
+            userInput.addEventListener('focus', (e) => {
+                e.preventDefault();
+                isKeyboardVisible = true;
+                
+                // Add a small delay to let the keyboard appear
+                setTimeout(() => {
+                    // Scroll the chat container to bottom
                     chatContainer.scrollTop = chatContainer.scrollHeight;
-                }
-            }, { passive: true });
-
-            // Add offline support
-            window.addEventListener('online', () => {
-                userInput.placeholder = 'Aklınızda bulunan sorularınızı yazınız...';
-                userInput.disabled = false;
+                    
+                    // On iOS, ensure the input is visible
+                    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                        window.scrollTo(0, 0);
+                        document.body.scrollTop = 0;
+                        userInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }
+                }, 300);
             });
 
-            window.addEventListener('offline', () => {
-                userInput.placeholder = 'Şu anda çevrimdışı...';
-                userInput.disabled = true;
+            // Prevent input blur
+            userInput.addEventListener('blur', (e) => {
+                if (isKeyboardVisible) {
+                    e.preventDefault();
+                    userInput.focus();
+                }
+            });
+
+            // Handle viewport height changes (keyboard appearance)
+            if (window.visualViewport) {
+                let viewportHeight = window.visualViewport.height;
+                window.visualViewport.addEventListener('resize', () => {
+                    // Only adjust if the height change is significant (keyboard showing/hiding)
+                    if (Math.abs(window.visualViewport.height - viewportHeight) > 150) {
+                        if (window.visualViewport.height < viewportHeight) {
+                            // Keyboard is shown
+                            container.style.height = `${window.visualViewport.height}px`;
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                            isKeyboardVisible = true;
+                        } else {
+                            // Keyboard is hidden
+                            container.style.height = '100vh';
+                            isKeyboardVisible = false;
+                        }
+                        viewportHeight = window.visualViewport.height;
+                    }
+                });
+            }
+
+            // Handle send button click
+            document.querySelector('button').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                sendMessage();
+            });
+
+            // Prevent document level touch events from dismissing keyboard
+            document.addEventListener('touchend', (e) => {
+                if (isKeyboardVisible && e.target !== userInput) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            // Add this to handle orientation changes
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    if (isKeyboardVisible) {
+                        window.scrollTo(0, 0);
+                        userInput.focus();
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                    }
+                }, 50);
             });
         });
 
