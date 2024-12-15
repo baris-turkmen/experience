@@ -493,7 +493,7 @@
                 position: sticky;
                 bottom: 0;
                 padding-bottom: max(12px, env(safe-area-inset-bottom));
-                background: rgba(255, 255, 255, 0.95);
+                background: rgba(14, 14, 14, 0.95);
             }
         }
 
@@ -536,7 +536,7 @@
             <span></span>
         </div>
         <div id="upload-indicator" class="upload-indicator">
-            Processing image...
+            Fotoğraf yükleniyor...
         </div>
         <div id="input-container">
             <label for="image-upload" class="image-upload-button">
@@ -546,7 +546,7 @@
                 </svg>
             </label>
             <input type="file" id="image-upload" accept="image/*" style="display: none">
-            <input type="text" id="user-input" placeholder="Aklınızda bulunan sorularınızı yazınız..." onkeypress="handleKeyPress(event)">
+            <input type="text" id="user-input" placeholder="Yazınız..." onkeypress="handleKeyPress(event)">
             <button onclick="sendMessage()">Gönder</button>
         </div>
     </div>
@@ -569,7 +569,7 @@
                     indicator.style.display = 'block';
 
                     if (file.size > 20 * 1024 * 1024) {
-                        indicator.textContent = 'Image too large (max 20MB)';
+                        indicator.textContent = 'Resim çok büyük (max 20MB)';
                         setTimeout(() => {
                             indicator.style.display = 'none';
                         }, 2000);
@@ -626,7 +626,7 @@
                     }
 
                     // When processing is complete
-                    indicator.textContent = 'Image ready!';
+                    indicator.textContent = 'Resim yüklendi!';
                     setTimeout(() => {
                         indicator.style.display = 'none';
                     }, 1500);
